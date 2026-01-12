@@ -11,6 +11,7 @@ from rich.table import Table
 from rich.text import Text
 from rich.theme import Theme
 
+from config.config import Config
 from utils.path import display_path_rel_to_cwd
 from utils.text import truncate_text
 
@@ -53,11 +54,12 @@ def get_console() -> Console:
 
 
 class TUI:
-    def __init__(self, console: Optional[Console] = None):
+    def __init__(self, config: Config, console: Optional[Console] = None):
+        self.config = config
         self.console = console or get_console()
         self._assistant_stream_open = False
         self._tool_args_by_call_id: dict[str, dict[str, Any]] = {}
-        self.cwd = Path.cwd()
+        self.cwd = self.config.cwd
 
     def print_welcome(self, title: str, lines: list[str]) -> None:
         body = "\n".join(lines)

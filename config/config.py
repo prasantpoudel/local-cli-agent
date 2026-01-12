@@ -1,6 +1,6 @@
-from pathlib import Path
-from typing import Optional, Any
 import os
+from pathlib import Path
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -13,13 +13,13 @@ class ModelConfig(BaseModel):
 
 class Config(BaseModel):
     model: ModelConfig = Field(default_factory=ModelConfig)
-    cwd: Path = Field(default_factory=Path.cwd())
+    cwd: Path = Field(default_factory=Path.cwd)
 
     max_tunrs: int = 100
     max_tool_output_tokens: int = 50_000
 
     developer_instructions: Optional[str] = None
-    uers_instruction: Optional[str] = None
+    user_instructions: Optional[str] = None
 
     debug: bool = False
 

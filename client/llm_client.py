@@ -1,10 +1,10 @@
 import asyncio
-import os
 from pathlib import Path
 from typing import Any, AsyncGenerator, Optional
 
 from dotenv import load_dotenv
 from openai import APIConnectionError, APIError, AsyncOpenAI, RateLimitError
+
 from config.config import Config
 
 from .response import (
@@ -155,9 +155,9 @@ class LLMClient:
                                 )
 
                         if tool_call_delta.function.arguments:
-                            tool_calls[idx][
-                                "arguments"
-                            ] += tool_call_delta.function.arguments
+                            tool_calls[idx]["arguments"] += (
+                                tool_call_delta.function.arguments
+                            )
 
                             yield StreamEvent(
                                 type=StreamEventType.TOOL_CALL_DELTA,

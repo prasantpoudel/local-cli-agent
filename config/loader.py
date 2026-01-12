@@ -1,12 +1,12 @@
+import logging
 from pathlib import Path
 from typing import Any, Optional
 
-from platformdirs import user_config_dir, user_data_dir
 import tomli
+from platformdirs import user_config_dir, user_data_dir
 
 from config.config import Config
 from utils.errors import ConfigError
-import logging
 
 logger = logging.getLogger(__name__)
 CONFIG_FILE_NAME = "config.toml"
@@ -15,11 +15,11 @@ AGENT_MD_FILE = "AGENT.MD"
 
 
 def get_config_dir() -> Path:
-    return Path(user_config_dir("ai-agent"))
+    return Path(user_config_dir(".ai_agent"))
 
 
 def get_data_dir() -> Path:
-    return Path(user_data_dir("ai-agent"))
+    return Path(user_data_dir(".ai_agent"))
 
 
 def get_system_config_path() -> Path:
@@ -40,7 +40,7 @@ def _parse_toml(path: Path):
 
 def _get_project_config(cwd: Path) -> Optional[Path]:
     current = cwd.resolve()
-    agent_dir = current / ".ai-agent"
+    agent_dir = current / ".ai_agent"
 
     if agent_dir.is_dir():
         config_file = agent_dir / CONFIG_FILE_NAME
@@ -73,7 +73,7 @@ def _merge_dicts(base: dict[str, Any], override: dict[str, Any]) -> dict[str, An
     return result
 
 
-def load_config(cwd: Optional[Path]=None) -> Config:
+def load_config(cwd: Optional[Path] = None) -> Config:
     cwd = cwd or Path.cwd()
 
     system_path = get_system_config_path()
@@ -92,7 +92,7 @@ def load_config(cwd: Optional[Path]=None) -> Config:
             project_config_dict = _parse_toml(project_path)
             config_dict = _merge_dicts(config_dict, project_config_dict)
         except ConfigError:
-            logger.warning(f"Skipping invalid system config: {system_path}")
+            logger.warning(f"Skipping invalid project config: {project_path}")
 
     if "cwd" not in config_dict:
         config_dict["cwd"] = cwd

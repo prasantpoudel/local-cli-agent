@@ -5,6 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
+.ai_agent
 config.toml
 
 # Distribution / packaging

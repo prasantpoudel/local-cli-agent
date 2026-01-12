@@ -1,25 +1,20 @@
-import json
-from pathlib import Path
 from typing import AsyncGenerator
 
-from client.llm_client import LLMClient
 from client.response import StreamEventType, ToolCall, ToolResultMessage
-from context.manager import ContextManager
-from tools.registry import create_default_registry
 from config.config import Config
 
 from .event import AgentEvent, AgentEventType
+from .session import Session
 
 
 class Agent:
     def __init__(self, config: Config):
-        self.client = LLMClient(config=config)
-        self.context_manager = ContextManager(config)
-        self.tool_registry = create_default_registry()
+        self.config = config
+        self.session = Session(self.config)
 
     async def run(self, message: str):
         yield AgentEvent.agent_start(message)
-        self.context_manager.add_user_message(message)
+        self.session.context_manager.add_user_message(message)
         final_response = None
         async for event in self._agentic_loop():
             yield event
@@ -30,13 +25,16 @@ class Agent:
         yield AgentEvent.agent_end(final_response)
 
     async def _agentic_loop(self) -> AsyncGenerator[AgentEvent, None]:
-        while True:
+        max_turns = self.config.max_tunrs
+
+        while True and max_turns > self.session._turn_count():
+            self.session.increment_turn()
             response_text = ""
             tool_calls: list[ToolCall] = []
-            tool_schemas = self.tool_registry.get_schemas()
+            tool_schemas = self.session.tool_registry.get_schemas()
 
-            async for event in self.client.chat_completion(
-                self.context_manager.get_messages(),
+            async for event in self.session.client.chat_completion(
+                self.session.context_manager.get_messages(),
                 tools=tool_schemas if tool_schemas else None,
                 stream=True,
             ):
@@ -67,7 +65,10 @@ class Agent:
                     for tc in tool_calls
                 ]
 
-            self.context_manager.add_assistant_message(
+            else:
+                break
+
+            self.session.context_manager.add_assistant_message(
                 response_text or None, tool_calls=api_tool_calls
             )
 
@@ -78,10 +79,10 @@ class Agent:
                         tool_call.call_id, tool_call.name, tool_call.arguments
                     )
 
-                    result = await self.tool_registry.invoke(
+                    result = await self.session.tool_registry.invoke(
                         tool_call.name,
                         tool_call.arguments,
-                        Path.cwd(),
+                        self.config.cwd,
                     )
                     yield AgentEvent.tool_call_complete(
                         call_id=tool_call.call_id, name=tool_call.name, result=result
@@ -95,19 +96,17 @@ class Agent:
                     )
 
             for tool_result in tool_call_results:
-                self.context_manager.add_tool_message(
+                self.session.context_manager.add_tool_message(
                     tool_result.tool_call_id, tool_result.content
                 )
 
             if response_text:
                 yield AgentEvent.text_complete(response_text)
 
-            break
-
     async def __aenter__(self) -> Agent:
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
-        if self.client:
-            await self.client.close()
-            self.client = None
+        if self.session and self.session.client:
+            await self.session.client.close()
+            self.session = None

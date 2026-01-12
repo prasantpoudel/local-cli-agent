@@ -7,9 +7,9 @@ import click
 
 from agent.agent import Agent
 from agent.event import AgentEventType
+from config.loader import Config, load_config
 from ui.tui import TUI, get_console
 from utils.terminal import get_terminal_logo
-from config.loader import load_config, Config
 
 console = get_console()
 
@@ -17,7 +17,7 @@ console = get_console()
 class CLI:
     def __init__(self, config: Config):
         self.agent: Optional[Agent] = None
-        self.tui = TUI(console)
+        self.tui = TUI(config, console)
         self.config = config
 
     async def run_single(self, message: str):
@@ -29,10 +29,10 @@ class CLI:
     async def run_interactive(self):
         # console.print(str(get_terminal_logo))
         self.tui.print_welcome(
-            "Lagent",
+            "Nova",
             lines=[
                 f"model:{self.config.model_name}",
-                f"cwd: {Path.cwd()}",
+                f"cwd: {self.config.cwd}",
                 "commands: /help /config /approval /model /exit",
             ],
         )
@@ -119,7 +119,6 @@ class CLI:
     help="Current working directory",
 )
 def main(prompt: Optional[str] = None, cwd: Optional[Path] = None):
-
     try:
         config: Config = load_config(cwd)
     except Exception as e:

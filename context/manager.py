@@ -1,10 +1,9 @@
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
+from config.config import Config
 from prompts.system import get_system_prompt
 from utils.text import count_tokens
-
-from config.config import Config
 
 
 @dataclass
@@ -32,7 +31,7 @@ class MessageItem:
 
 class ContextManager:
     def __init__(self, config: Config):
-        self._system_prompt = get_system_prompt()
+        self._system_prompt = get_system_prompt(config)
         self._messages: list[MessageItem] = []
         self._tokenizer_model_name = config.model.name
 
