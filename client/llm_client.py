@@ -5,23 +5,32 @@ from typing import Any, AsyncGenerator, Optional
 
 from dotenv import load_dotenv
 from openai import APIConnectionError, APIError, AsyncOpenAI, RateLimitError
+from config.config import Config
 
-from .response import (StreamEvent, StreamEventType, TextDelta, TokenUsage,
-                       ToolCall, ToolCallDelta, parse_tool_call_arguments)
+from .response import (
+    StreamEvent,
+    StreamEventType,
+    TextDelta,
+    TokenUsage,
+    ToolCall,
+    ToolCallDelta,
+    parse_tool_call_arguments,
+)
 
 load_dotenv(Path(__file__).parent.parent / ".env")
 
 
 class LLMClient:
-    def __init__(self):
+    def __init__(self, config: Config):
         self._client: AsyncOpenAI | None = None
         self._max_retry: int = 3
+        self.config = config
 
     def get_client(self) -> AsyncOpenAI:
         if self._client is None:
             self._client = AsyncOpenAI(
-                api_key=os.getenv("OPEN_ROUTER_API_KEY"),
-                base_url="https://openrouter.ai/api/v1",
+                api_key=self.config.api_key,
+                base_url=self.config.base_url,
             )
         return self._client
 
@@ -52,7 +61,7 @@ class LLMClient:
     ) -> AsyncGenerator[StreamEvent, None]:
         client = self.get_client()
         kwargs = {
-            "model": "mistralai/devstral-2512:free",
+            "model": self.config.model_name,
             "messages": messages,
             "stream": stream,
         }

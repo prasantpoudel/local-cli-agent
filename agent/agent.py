@@ -6,14 +6,15 @@ from client.llm_client import LLMClient
 from client.response import StreamEventType, ToolCall, ToolResultMessage
 from context.manager import ContextManager
 from tools.registry import create_default_registry
+from config.config import Config
 
 from .event import AgentEvent, AgentEventType
 
 
 class Agent:
-    def __init__(self):
-        self.client = LLMClient()
-        self.context_manager = ContextManager()
+    def __init__(self, config: Config):
+        self.client = LLMClient(config=config)
+        self.context_manager = ContextManager(config)
         self.tool_registry = create_default_registry()
 
     async def run(self, message: str):
