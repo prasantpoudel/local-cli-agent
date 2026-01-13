@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
+from config.config import Config
 from prompts.system import get_system_prompt
 from utils.text import count_tokens
 
@@ -29,10 +30,10 @@ class MessageItem:
 
 
 class ContextManager:
-    def __init__(self):
-        self._system_prompt = get_system_prompt()
+    def __init__(self, config: Config):
+        self._system_prompt = get_system_prompt(config)
         self._messages: list[MessageItem] = []
-        self._tokenizer_model_name = "mistralai/devstral-2512:free"
+        self._tokenizer_model_name = config.model.name
 
     def add_user_message(self, content: str) -> None:
         item = MessageItem(
@@ -44,7 +45,7 @@ class ContextManager:
         self._messages.append(item)
 
     def add_assistant_message(
-        self, content: str | None, tool_calls: list[dict[str, Any]] | None = None
+        self, content: Optional[str], tool_calls: Optional[list[dict[str, Any]]] = None
     ) -> None:
         # For token counting, we'll just use content for now.
         # In a real app we'd count tool call tokens too.

@@ -12,7 +12,7 @@ def get_tokenizer(model: str):
         return encoding.encode
 
 
-def count_tokens(text: str, model: str = "mistralai/devstral-2512:free") -> int:
+def count_tokens(text: str, model: str) -> int:
     tokenizer = get_tokenizer(model)
 
     if tokenizer:
